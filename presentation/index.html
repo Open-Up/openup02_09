@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Open Up</title>
+
+		<meta name="description" content="Open Up : Lesson 2 DNS servers">
+		<meta name="author" content="Tellier Benoit">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+	
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+
+
+
+<section>
+<img data-src="img/large.png"><br/>
+<img data-src="img/openup.png">
+
+<h2>Mail protocols</h2>
+
+<p>Speaker : <a>Benoit Tellier</a></p>
+
+<p><small>
+Retrieve this presentation online : <a href="https://rawgit.com/Open-Up/openup02_08/master/presentation/index.html">https://rawgit.com/Open-Up/openup02_08/master/presentation/index.html</a><br/>
+And on <a href="https://github.com/Open-Up/openup02_08/">GitHub</a></small>
+</p>
+</section>
+
+<!--------------------------------------------------
+----------------------------------------------------
+================================================----
+NEW SECTION NEW SECTION NEW SECTION NEW SECTION=----
+================================================----
+----------------------------------------------------
+---------------------------------------------------->
+
+<section>
+<h2>Objectives</h2>
+<ul>
+  <li class="fragment">Present mail protocols</li>
+  <li class="fragment">Configure a postfix server</li>
+  <li class="fragment">Configure mails between two domains</li>
+</ul>
+</section>
+
+
+<!--------------------------------------------------
+----------------------------------------------------
+================================================----
+NEW SECTION NEW SECTION NEW SECTION NEW SECTION=----
+================================================----
+----------------------------------------------------
+---------------------------------------------------->
+
+<section>
+  <section>
+    <h1>You said mail ?</h1>
+  </section>
+
+  <section>
+    <h2>What is a mail ?</h2>
+    <p>A message sent to me via te internet</p>
+    <p>I can read it when I want</p>
+    <p>I can (theorically) send a message to anyone</p>
+    <p>Mails are based on open standards, and broadly supported</p>
+  </section>
+
+  <section>
+    <h2>E-mail guts</h2>
+    <pre><code>Return-Path: <arch-general-bounces@archlinux.org>
+Received: from mx2.minet.net ([IPv6:::ffff:192.168.102.26])
+	by localhost (spam.minet.net [::ffff:192.168.102.97]) (amavisd-new, port 10024)
+	with ESMTP id Meygb-OHe7nm for <benwa@minet.net>;
+	Thu,  4 Jun 2015 04:09:10 +0000 (UTC)
+MIME-Version: 1.0
+From: Murari <murari.ksr@gmail.com>
+Date: Thu, 4 Jun 2015 06:08:41 +0200
+Message-ID: <CAN1zdnW5PW7z5msM-TjUpouygxWY6z-25A3WCB-C5BvqDuP1Qw@mail.gmail.com>
+To: General Discussion about Arch Linux <arch-general@archlinux.org>
+Content-Type: text/plain; charset=UTF-8
+Subject: [arch-general] Inkscape fails to open svg files
+Precedence: list
+Sender: "arch-general" <arch-general-bounces@archlinux.org>
+
+Hi all,
+
+How are you doing ?
+
+Thanks!</code></pre>
+  </section>
+
+  <section>
+    <h2>Attachments...</h2>
+    <pre><code>Received: from alderaan.linagora.com (smtp.linagora.dc1 [172.16.18.53])
+	 by imap (Cyrus v2.2.13-Debian-2.2.13-19+squeeze3) with LMTPA;
+	 Thu, 18 Jun 2015 12:43:28 +0200
+To: btellier@linagora.com
+From: Benoit Tellier <btellier@linagora.com>
+Subject: Test message
+Message-ID: <5582A0CE.4020801@linagora.com>
+Date: Thu, 18 Jun 2015 12:43:26 +0200
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+ boundary="------------030000010109090603040500"
+
+This is a multi-part message in MIME format.
+--------------030000010109090603040500
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+This mail have a non textual attachment !
+
+--------------030000010109090603040500
+Content-Type: application/vnd.oasis.opendocument.text;
+ name="toto.odt"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="toto.odt"
+
+UEsDBBQAAAgAAGNV0kZexjIMJwAAACcAAAAIAAAAbWltZXR5cGVhcHBsaWNhdGlvbi92bmQu
+b2FzaXMub3BlbmRvY3VtZW50LnRleHRQSwMEFAAACAAAY1XSRnPWCvM4AwAAOAMAABgAAABU
+aHVtYm5haWxzL3RodW1ibmFpbC5wbmeJUE5HDQoaCgAAAA1JSERSAAAAxgAAAQAIAwAAAN+D
+
+--------------030000010109090603040500--</code></pre>
+  </section>
+
+  <section>
+    <h2>How to transport e-mails ?</h2>
+    <p>Using mail protocols !</p>
+    <ul>
+      <li class="fragment"><b>To a mail server</b> : SMTP, LMTP</li>
+      <li class="fragment"><b>To the final client</b> : IMAP, POP3, JMAP, etc...</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Mail protocols ?</h2>
+    <pre class="fragment"><code>C: hello
+S: hello client
+C: can I access resource A
+S: sure, help yourself</code></pre>
+    <ul>
+      <li class="fragment">Line by line</li>
+      <li class="fragment">Their own port / own structure</li>
+      <li class="fragment">As opposed to HTTP, can not be handle by the browser</li>
+      <li class="fragment">JMAP</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>SMTP</h2>
+    <p>Sending messages to a mail server</p>
+    <pre class="fragment"><code>S: 220 mydomain.tld smtp
+
+C: ehlo yopmail.com
+C: mail from:<matthieu@yopmail.com>
+C: rcpt to:<bob@mydomain.tld>
+C: data
+
+S: 250.*
+S: 250-PIPELINING
+S: 250-ENHANCEDSTATUSCODES
+S: 250 8BITMIME
+S: 250 2.1.0 Sender <matthieu@yopmail.com> OK
+S: 250 2.1.5 Recipient <bob@mydomain.tld> OK
+S: 354 Ok Send data ending with <CRLF>.<CRLF>
+
+C: subject: test
+C: 
+C: test
+C: .
+
+S: 250 2.6.0 Message received</code></pre>
+    <p class="fragment">STARTTLS, SSL</p>
+    <pre class="fragment"><code>telnet mail.example.com 25</code></pre>
+  </section>
+
+  <section>
+    <h2>SMTP</h2>
+    <p>SMTP server architecture</p>
+    <img data-src="img/smtp_archi.png">
+  </section>
+
+  <section>
+    <h2>SMTP and security</h2>
+    <p class="fragment">No athentication for interserver communication : you can pretend to be anyone</p>
+    <p class="fragment">Spam and Spam relay !</p>
+    <p class="fragment">Use of SSL / STARTTLS have to be enforced</p>
+  </section>
+
+  <section>
+    <h2>Relay management</h2>
+    <img data-src="img/story_1.png">
+  </section>
+
+  <section>
+    <h2>Relay management</h2>
+    <img data-src="img/story_2.png">
+  </section>
+
+  <section>
+    <h2>SPF</h2>
+    <p class="fragment">Sender policy framework</p>
+    <p class="fragment">Declare which IPs for a domain can send mails (DNS)</p>
+    <p class="fragment">Nothing about content. IP can be spoofed.</p>
+  </section>
+
+  <section>
+    <h2>DKIM</h2>
+    <p class="fragment">Domain Keys Identified Mail</p>
+    <p class="fragment">Sign a message. Signature can be verified in NS records.</p>
+    <p class="fragment">Content signed. Relies on public / private keys.</p>
+  </section>
+
+  <section>
+    <h2>IMAP</h2>
+    <p>A client retrieves its mails</p>
+    <pre class="fragment"><code>C: a1 CREATE statustest
+S: a1 OK CREATE completed.
+
+C: a003 STATUS statustest (MESSAGES RECENT UIDNEXT UIDVALIDITY UNSEEN)
+S: \* STATUS \"statustest\" \(MESSAGES 0 RECENT 0 UIDNEXT \d+ UIDVALIDITY \d+ UNSEEN 0\)
+S: a003 OK STATUS completed.
+
+C: A005 APPEND statustest {254+}
+C: Date: Mon, 7 Feb 1994 21:52:25 -0800 (PST)
+C: From: Fred Foobar <foobar@Blurdybloop.COM>
+C: Subject: Test 01
+C: To: mooch@owatagu.siam.edu
+C: Message-Id: <B27397-0100000@Blurdybloop.COM>
+C: MIME-Version: 1.0
+C: Content-Type: TEXT/PLAIN; CHARSET=US-ASCII
+C:
+C: Test 01
+C:
+S: A005 OK (\[.+\] )?APPEND completed.</code></pre>
+    <p class="fragment">STARTTLS, SSL</p>
+    <p class="fragment">Online storage, flags, mailboxes</p>
+  </section>
+
+  <section>
+    <h2>SIEVE</h2>
+    <p>Scripts a user can manage to customize behaviour</p>
+    <pre class="fragment"><code>require "fileinto";
+require "body";
+
+if body :text :contains "to match" {
+    fileinto "INBOX.select";
+} else {
+    fileinto "INBOX.not.selected";
+}</code></pre>
+    <p class="fragment">It is a language, safe</p>
+    <p class="fragment">filtering, rejection, replies, vacation, tagging, etc...</p>
+  </section>
+
+</section>
+
+<!--------------------------------------------------
+----------------------------------------------------
+================================================----
+NEW SECTION NEW SECTION NEW SECTION NEW SECTION=----
+================================================----
+----------------------------------------------------
+---------------------------------------------------->
+
+<section>
+  <section>
+    <h1>Free MTA</h1>
+  </section>
+  <section>
+    <h2>Free MTA</h2>
+<div>
+    <ul >Postfix :
+      <li>The one to use</li>
+      <li>Simple to configure</li>
+      <li>Safe</li>
+      <li>Active developpement</li>
+    </ul>
+</div></section>
+  <section>
+    <h2>Free MTA</h2><div>
+    <ul >sendmail :
+      <li>fossil</li>
+      <li>configuration nightmare</li>
+      <li>Still developped but not actively</li>
+    </ul>
+</div>
+</section>
+  <section>
+    <h2>Free MTA</h2>
+<div>
+    <ul >Exim :
+      <li>By default on Debian</li>
+      <li>Less used</li>
+    </ul>
+</div></section>
+  <section>
+    <h2>Free MTA</h2><div>
+    <ul >qmail :
+      <li>No more developped since 1998</li>
+      <li>Introduced maildir format</li>
+    </ul>
+</div>
+  </section>
+  <section>
+    <h2>Postfix</h2>
+    <img width="300" height="200" data-src="img/logo.png">
+    <pre class="fragment"><code>apt-get install postfix</code></pre>
+    <pre class="fragment"><code>/etc/postfix/main.cf</code></pre>
+    <pre class="fragment"><code>/etc/postfix/master.cf</code></pre>
+  </section>
+  <section>
+    <h2>master.cf</h2>
+    <pre><code># /usr/share/postfix/main.cf.dist 
+
+command_directory = /usr/sbin
+daemon_directory = /usr/lib/postfix
+program_directory = /usr/lib/postfix
+
+smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
+setgid_group = postdrop
+biff = no
+2bounce_notice_recipient = postmaster
+
+# appending .domain is the MUA's job.
+append_dot_mydomain = no
+myhostname = host.foo.org
+mydomain = foo.org
+mydestination = $myhostname, localhost.$mydomain $mydomain
+myhostname = NomHote.foo.org
+myorigin = $mydomain
+myorigin = /etc/mailname
+
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+# /etc/mailname contain the equivalent of $MYHOSTNAME
+
+mynetworks = 127.0.0.0/8 192.168.0.0/24
+mailbox_command = procmail -a "$EXTENSION"
+mailbox_size_limit = 0
+recipient_delimiter = +
+relay_domains = $mydestination
+relayhost = $mydomain
+smtpd_recipient_restrictions = permit_mynetworks,check_relay_domains</code></pre>
+  </section>
+  <section>
+    <h2>postconf</h2>
+    <pre class="fragment"><code># display all configuration values
+$ postconf
+
+# Those that are different from default value
+$ postconf -n
+
+# display specific value
+$ postconf message_size_limit
+message_size_limit = 10240000
+
+# modify a configuration value
+$postconf -e message_size_limit=51200000</code></pre>
+    <pre class="fragment"><code>/etc/postfix/main.cf</code></pre>
+    <pre class="fragment"><code>/etc/postfix/master.cf</code></pre>
+  </section>
+  <section>
+    <h2>/etc/aliases</h2>
+    <p>Used for mail redirection</p>
+    <p>used to generate /etc/aliases.db</p>
+    <pre><code># Possible values are
+# A mail address (intern or extern)
+marketing: marcel, prestataire@example.com
+
+# a mbox name
+sales: /srv/archives/sales.mbox
+
+# a command to execute
+support: "|/usr/local/bin/ticket support"</code></pre>
+    <pre class="fragment"><code># Generate /etc/aliases.db
+$ newaliases</code></pre>
+  </section>
+</section>
+
+
+<!--------------------------------------------------
+----------------------------------------------------
+================================================----
+NEW SECTION NEW SECTION NEW SECTION NEW SECTION=----
+================================================----
+----------------------------------------------------
+---------------------------------------------------->
+
+
+<section>
+	<h1>Questions ?</h1>
+</section>
+
+
+
+
+
+
+
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				slideNumber: true,
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+                                
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
